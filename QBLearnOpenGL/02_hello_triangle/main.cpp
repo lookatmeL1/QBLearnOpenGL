@@ -1,6 +1,6 @@
 ﻿//第一次提交，欧耶！！！
 #include <glad/glad.h>
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 //注册回调函数，当窗口大小被调整时调用
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
