@@ -170,6 +170,9 @@ int main()
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
+	//线框绘制模式
+	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+
 	//如果窗口没有被关闭则会循环渲染窗口
 	while (!glfwWindowShouldClose(window))
 	{
