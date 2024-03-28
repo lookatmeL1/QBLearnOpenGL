@@ -60,16 +60,26 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	//定义顶点数组
-	float vertices[] = 
-	{
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
-	 0.0f,  0.5f, 0.0f
+	float vertices[] = {
+	0.5f, 0.5f, 0.0f,   // 右上角
+	0.5f, -0.5f, 0.0f,  // 右下角
+	-0.5f, -0.5f, 0.0f, // 左下角
+	-0.5f, 0.5f, 0.0f   // 左上角
 	};
 
-	//创建VBO（顶点缓冲对象）、VAO（顶点数组对象）
-	unsigned int VBO, VAO;
+	unsigned int indices[] = {
+		// 注意索引从0开始! 
+		// 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
+		// 这样可以由下标代表顶点组合成矩形
+
+		0, 1, 3, // 第一个三角形
+		1, 2, 3  // 第二个三角形
+	};
+
+	//创建VBO（顶点缓冲对象）、VAO（顶点数组对象） 、EBO（索引缓冲对象）
+	unsigned int VBO, VAO,EBO;
 	glGenBuffers(1,&VBO);
+	glGenBuffers(1,&EBO);
 	glGenVertexArrays(1,&VAO);
 
 	//绑定VAO对象
@@ -77,6 +87,11 @@ int main()
 
 	//绑定缓冲
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	//复制索引数组到索引缓冲中
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
+
 
 
 	//在缓冲区填充数据 参数：它的第一个参数是目标缓冲的类型：顶点缓冲对象当前绑定到GL_ARRAY_BUFFER目标上。
@@ -167,9 +182,7 @@ int main()
 
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
-
-
+		glDrawElements(GL_TRIANGLES, 6,GL_UNSIGNED_INT,0);
 		glBindVertexArray(0);
 
 		//函数会交换颜色缓冲（它是一个储存着GLFW窗口每一个像素颜色值的大缓冲），它在这一迭代中被用来绘制，并且将会作为输出显示在屏幕上。
