@@ -1,27 +1,16 @@
 ﻿//第一次提交，欧耶！！！
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "glframework/core.h"
+#include "glframework/shader.h"
 #include <iostream>
 //注册回调函数，当窗口大小被调整时调用
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void processInput(GLFWwindow *window);
 
-  //顶点着色器程序
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0f);\n"
-"}\0";
+Shader* shader = nullptr;
 
-//片段着色器程序
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{"
-"FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}";
+char* vertexPath = "assets/shaders/vertex.glsl";
+char* fragmentPath = "assets/shaders/fragment.glsl";
 
 int main()
 {
@@ -76,33 +65,34 @@ int main()
 		1, 2, 3  // 第二个三角形
 	};
 
-	//创建VBO（顶点缓冲对象）、VAO（顶点数组对象） 、EBO（索引缓冲对象）
+	//VBO（顶点缓冲对象）、VAO（顶点数组对象） 、EBO（索引缓冲对象）
 	unsigned int VBO, VAO,EBO;
+
+ //创建VBO对象
+ //glBufferData（）
+//在缓冲区填充数据 参数：它的第一个参数是目标缓冲的类型：顶点缓冲对象当前绑定到GL_ARRAY_BUFFER目标上。
+//第二个参数指定传输数据的大小(以字节为单位)；用一个简单的sizeof计算出顶点数据大小就行。
+//第三个参数是我们希望发送的实际数据。
+//第四个参数指定了我们希望显卡如何管理给定的数据。它有三种形式：
+//GL_STATIC_DRAW ：数据不会或几乎不会改变。
+//GL_DYNAMIC_DRAW：数据会被改变很多。
+//GL_STREAM_DRAW ：数据每次绘制时都会改变。
 	glGenBuffers(1,&VBO);
-	glGenBuffers(1,&EBO);
-	glGenVertexArrays(1,&VAO);
-
-	//绑定VAO对象
-	glBindVertexArray(VAO);
-
-	//绑定缓冲
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	//复制索引数组到索引缓冲中
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
-
-
-
-	//在缓冲区填充数据 参数：它的第一个参数是目标缓冲的类型：顶点缓冲对象当前绑定到GL_ARRAY_BUFFER目标上。
-	//第二个参数指定传输数据的大小(以字节为单位)；用一个简单的sizeof计算出顶点数据大小就行。
-	//第三个参数是我们希望发送的实际数据。
-	//第四个参数指定了我们希望显卡如何管理给定的数据。它有三种形式：
-	//GL_STATIC_DRAW ：数据不会或几乎不会改变。
-	//GL_DYNAMIC_DRAW：数据会被改变很多。
-	//GL_STREAM_DRAW ：数据每次绘制时都会改变。
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);	 //绑定缓冲
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	//创建EBO对象
+	glGenBuffers(1,&EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
+
+   //创建VAO对象
+	glGenVertexArrays(1,&VAO);
+	glBindVertexArray(VAO);
+
+
+	//绑定vbo
+	glBindBuffer(1, VBO);
 	//设置顶点属性指针
 	/*第一个参数指定我们要配置的顶点属性。还记得我们在顶点着色器中使用layout(location = 0)定义了position顶点属性的位置值(Location)吗？它可以把顶点属性的位置值设置为0。
 		因为我们希望把数据传递到这一个顶点属性中，所以这里我们传入0。
@@ -115,60 +105,15 @@ int main()
 		（译注: 这个参数的意思简单说就是从这个属性第二次出现的地方到整个数组0位置之间有多少字节）。
 	最后一个参数的类型是void * ，所以需要我们进行这个奇怪的强制类型转换。它表示位置数据在缓冲中起始位置的偏移量(Offset)。
 	由于位置数据在数组的开头，所以这里是0。我们会在后面详细解释这个参数。*/
+	glEnableVertexAttribArray(0);//激活 VAO 0号位置
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
 
+	//将EBO加入当前VAO
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
+	glEnableVertexAttribArray(0);//激活 VAO 0号位置
 
-	//创建顶点着色器
-	unsigned int vertexShader, fragmentShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	//附加着色器代码
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
-	//编译顶点着色器代码
-	glCompileShader(vertexShader);
-	glCompileShader(fragmentShader);
-
-	//检测是否编译成功
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader,GL_COMPILE_STATUS,&success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "顶点着色器编译失败：\n" << infoLog << std::endl;
-	}
-
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "片段着色器编译失败：\n" << infoLog << std::endl;
-	}
-
-	//创建程序对象
-	unsigned int shaderProgram = glCreateProgram();
-	//将着色器附加到程序对象上
-	glAttachShader(shaderProgram,vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-
-	//链接着色器
-	glLinkProgram(shaderProgram);
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram,512,NULL,infoLog);
-		std::cout << "链接着色器失败！！" << infoLog << std::endl;
-	}
-
-	//使用着色器程序
-	glUseProgram(shaderProgram);
-
-	//删除着色器
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	 //读取shader
+	shader = new Shader(vertexPath,fragmentPath);
 
 	//线框绘制模式
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
@@ -183,10 +128,11 @@ int main()
 		glClearColor(0.2f,0.3f,0.3f,1.0f);	  //渲染颜色
 		glClear(GL_COLOR_BUFFER_BIT); //清除上一帧的颜色
 
-		glUseProgram(shaderProgram);
+		shader->begin();
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6,GL_UNSIGNED_INT,0);
+		glDrawElements(GL_TRIANGLES, 6,GL_UNSIGNED_INT,0);		 //DrawCall
 		glBindVertexArray(0);
+		shader->end();
 
 		//函数会交换颜色缓冲（它是一个储存着GLFW窗口每一个像素颜色值的大缓冲），它在这一迭代中被用来绘制，并且将会作为输出显示在屏幕上。
 		glfwSwapBuffers(window);
