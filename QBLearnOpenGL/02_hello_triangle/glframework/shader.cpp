@@ -1,5 +1,8 @@
 #include "shader.h"
 #include "shader.h"
+#include "shader.h"
+#include "shader.h"
+#include "shader.h"
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -92,6 +95,18 @@ void Shader::end()
 {
 	glUseProgram(0);
 }
+
+GLuint Shader::getLocation(char* name)
+{
+	return glGetAttribLocation(mProgram,name);
+}
+
+void Shader::setUniform1f(const std::string& variableName, float value)
+{
+	GLint location = glGetUniformLocation(mProgram, variableName.c_str());
+	glUniform1f(location, value);
+}
+
 
 void Shader::checkShderErrors(GLuint target, CheckType type)
 {

@@ -2,6 +2,7 @@
 #include "glframework/core.h"
 #include "glframework/shader.h"
 #include <iostream>
+#include <chrono>
 //注册回调函数，当窗口大小被调整时调用
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -50,10 +51,9 @@ int main()
 
 	//定义顶点数组
 	float vertices[] = {
-	0.5f, 0.5f, 0.0f,   // 右上角
-	0.5f, -0.5f, 0.0f,  // 右下角
-	-0.5f, -0.5f, 0.0f, // 左下角
-	-0.5f, 0.5f, 0.0f   // 左上角
+		0.0f,0.5f,0.0f,
+		-0.5f,-0.5f,0.0f,
+		0.5f,-0.5f,0.0f
 	};
 
 	unsigned int indices[] = {
@@ -61,9 +61,14 @@ int main()
 		// 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
 		// 这样可以由下标代表顶点组合成矩形
 
-		0, 1, 3, // 第一个三角形
-		1, 2, 3  // 第二个三角形
+		0, 1, 2, // 第一个三角形
 	};
+
+	
+	//读取shader
+	shader = new Shader(vertexPath, fragmentPath);
+	
+	GLuint posLocation = shader->getLocation("aPos");	  //动态绑定vertexShader内的aPos参数
 
 	//VBO（顶点缓冲对象）、VAO（顶点数组对象） 、EBO（索引缓冲对象）
 	unsigned int VBO, VAO,EBO;
@@ -105,18 +110,17 @@ int main()
 		（译注: 这个参数的意思简单说就是从这个属性第二次出现的地方到整个数组0位置之间有多少字节）。
 	最后一个参数的类型是void * ，所以需要我们进行这个奇怪的强制类型转换。它表示位置数据在缓冲中起始位置的偏移量(Offset)。
 	由于位置数据在数组的开头，所以这里是0。我们会在后面详细解释这个参数。*/
-	glEnableVertexAttribArray(0);//激活 VAO 0号位置
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(posLocation);//激活 VAO 0号位置
+	glVertexAttribPointer(posLocation, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
 	//将EBO加入当前VAO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
 	glEnableVertexAttribArray(0);//激活 VAO 0号位置
 
-	 //读取shader
-	shader = new Shader(vertexPath,fragmentPath);
+
 
 	//线框绘制模式
-	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//如果窗口没有被关闭则会循环渲染窗口
 	while (!glfwWindowShouldClose(window))
@@ -128,9 +132,12 @@ int main()
 		glClearColor(0.2f,0.3f,0.3f,1.0f);	  //渲染颜色
 		glClear(GL_COLOR_BUFFER_BIT); //清除上一帧的颜色
 
+
+		
 		shader->begin();
+		shader->setUniform1f("time", glfwGetTime());
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6,GL_UNSIGNED_INT,0);		 //DrawCall
+		glDrawElements(GL_TRIANGLE_FAN, 6,GL_UNSIGNED_INT,0);		 //DrawCall
 		glBindVertexArray(0);
 		shader->end();
 
