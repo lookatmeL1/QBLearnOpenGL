@@ -17,6 +17,26 @@ char* fragmentPath = "assets/shaders/fragment.glsl";
 unsigned int VBO, VAO, EBO;
 
 
+void  framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	//被拉伸时重新渲染拉伸后的窗口
+	glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow* window)
+{
+	//如果按下ESC键则关闭程序
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, true);
+	}
+}
+
+void prepareTexture()
+{
+
+}
+
 void prepareVAO()
 {
 
@@ -119,13 +139,10 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	
-
-	
 	//读取shader
 	shader = new Shader(vertexPath, fragmentPath);
-
 	prepareVAO();
-
+	prepareTexture();
 
 	//线框绘制模式
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -141,7 +158,6 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT); //清除上一帧的颜色
 		
 		shader->begin();
-		shader->setUniform1f("time", glfwGetTime());
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLE_FAN, 6,GL_UNSIGNED_INT,0);		 //DrawCall
 		glBindVertexArray(0);
@@ -159,17 +175,3 @@ int main()
 	return 0;
 }
 
-void  framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	//被拉伸时重新渲染拉伸后的窗口
-	glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow *window)
-{
-	//如果按下ESC键则关闭程序
-	if (glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
-	{
-		glfwSetWindowShouldClose(window,true);
-	}
-}
