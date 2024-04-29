@@ -1,8 +1,12 @@
-﻿//第一次提交，欧耶！！！
+﻿//
+//参考资料 https://learnopengl-cn.github.io/01%20Getting%20started/06%20Textures/
+//
 #include "glframework/core.h"
 #include "glframework/shader.h"
 #include <iostream>
 #include <chrono>
+#define STB_IMAGE_IMPLEMENTATION
+#include "application/stb_image.h"
 //注册回调函数，当窗口大小被调整时调用
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -13,8 +17,9 @@ Shader* shader = nullptr;
 char* vertexPath = "assets/shaders/vertex.glsl";
 char* fragmentPath = "assets/shaders/fragment.glsl";
 
-//VBO（顶点缓冲对象）、VAO（顶点数组对象） 、EBO（索引缓冲对象）
-unsigned int VBO, VAO, EBO;
+//VAO（顶点数组对象）
+unsigned int VAO;
+unsigned int texture;
 
 
 void  framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -34,17 +39,49 @@ void processInput(GLFWwindow* window)
 
 void prepareTexture()
 {
+	//读取图片
+	int width, height, channels;
+	//反转Y轴
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load("assets/textures/goku.jpg",&width,&height,&channels,STBI_rgb_alpha);
+	//生成纹理并且激活单元绑定
+	glGenTextures(1,&texture);	 //生成纹理
 
+	glActiveTexture(GL_TEXTURE0);//激活纹理单元
+
+	glBindTexture(GL_TEXTURE_2D,texture);//绑定纹理对象
+
+	//传输纹理数据，开辟显存
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,data);
+
+	//释放图片资源内存
+	stbi_image_free(data);
+
+	//设置纹理过滤方式
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);//双线性插值
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);//最近插值
+
+	//设置纹理包裹方式
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);	//U 设置平铺
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);//V
 }
 
 void prepareVAO()
 {
+	 //VBO（顶点缓冲对象） 、EBO（索引缓冲对象）	,纹理VBO
+	unsigned int VBO, EBO,UVVBO;
 
 	//定义顶点数组
 	float vertices[] = {
 		0.0f,0.5f,0.0f,
 		-0.5f,-0.5f,0.0f,
 		0.5f,-0.5f,0.0f
+	};
+
+	float uvs[] = {
+	  0.5f,1.0f,
+	  0.0f,0.0f,
+	  1.0f,0.0f
 	};
 
 	unsigned int indices[] = {
@@ -68,6 +105,12 @@ void prepareVAO()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);	 //绑定缓冲
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+
+	//创建纹理VBO
+	glGenBuffers(1, &UVVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, UVVBO);	 //绑定缓冲
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uvs), uvs, GL_STATIC_DRAW);
+
 	//创建EBO对象
 	glGenBuffers(1, &EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -78,6 +121,7 @@ void prepareVAO()
 	glBindVertexArray(VAO);
 
 	GLuint posLocation = shader->getLocation("aPos");	  //动态绑定vertexShader内的aPos参数
+	GLuint nvLocation	 = shader->getLocation("aUV"); //动态绑定vertexShader内的uv参数
 
 	//绑定vbo
 	glBindBuffer(1, VBO);
@@ -95,6 +139,12 @@ void prepareVAO()
 	由于位置数据在数组的开头，所以这里是0。我们会在后面详细解释这个参数。*/
 	glEnableVertexAttribArray(posLocation);//激活 VAO 0号位置
 	glVertexAttribPointer(posLocation, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+
+	//绑定UV纹理数据
+	glBindBuffer(2,UVVBO);
+	glEnableVertexAttribArray(nvLocation);
+	glVertexAttribPointer(nvLocation, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
 	//将EBO加入当前VAO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
